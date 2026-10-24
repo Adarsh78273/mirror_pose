@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mirror Pose-Off | College Fest 2026</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1b1340;--pink:#ff3d81;--yellow:#ffe23d;--mint:#3dffc0;--paper:#f6f1ff}
+body{font-family:'Space Grotesk',sans-serif;font-weight:500;color:var(--ink);overflow-x:hidden;background:#3a1bb3}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(rgba(255,255,255,.15) 2px,transparent 2.5px) 0 0/26px 26px,linear-gradient(160deg,#5a35f0,#3a1bb3 60%,#2a1090)}
+.orb{font-family:'Lilita One',sans-serif;font-weight:400;letter-spacing:.02em}
+.title{text-shadow:3px 3px 0 var(--pink),6px 6px 0 #000}
+.sticker{background:#fff;color:var(--ink);border:3px solid #000;border-radius:18px;box-shadow:5px 5px 0 #000}
+.panel{background:var(--paper);color:var(--ink);border:3px solid #000;border-radius:24px;box-shadow:7px 7px 0 #000}
+.panel.dark{background:var(--ink);color:#fff}
+.btn{border:3px solid #000;border-radius:16px;box-shadow:5px 5px 0 #000;transition:transform .08s,box-shadow .08s}
+.btn:hover{filter:brightness(1.05)}
+.btn:active{transform:translate(4px,4px);box-shadow:1px 1px 0 #000}
+.card{background:#fff;color:var(--ink);border:3px solid #000;border-radius:14px;padding:6px;text-align:left;box-shadow:3px 3px 0 #000;transition:transform .12s,box-shadow .12s}
+.card:hover{transform:translate(-1px,-2px) rotate(-1deg);box-shadow:5px 5px 0 #000}
+.card.on{background:var(--pink);color:#fff;transform:rotate(-1.5deg);box-shadow:5px 5px 0 #000}
+.marquee{position:relative;padding:18px;background:var(--pink);border:4px solid #000;border-radius:30px;box-shadow:8px 8px 0 #000}
+.marquee::before{content:"";position:absolute;inset:4px;padding:8px;border-radius:26px;pointer-events:none;background:radial-gradient(circle,var(--yellow) 3.5px,transparent 4.5px) 0 0/22px 22px;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;animation:bulbs 1.2s steps(2) infinite}
+@keyframes bulbs{50%{opacity:.35}}
+@keyframes flash{0%{opacity:1}100%{opacity:0}}
+.flash{animation:flash .6s ease-out}
+@keyframes pop{0%{transform:scale(2.2);opacity:0}30%{opacity:1}100%{transform:scale(1)}}
+.pop{animation:pop .5s ease-out}
+.cdnum{color:var(--yellow);-webkit-text-stroke:10px #000;paint-order:stroke fill;text-shadow:8px 8px 0 var(--pink)}
+.tab{border:3px solid #000;border-radius:12px;padding:6px;font-family:'Lilita One',sans-serif;background:#fff;box-shadow:3px 3px 0 #000;transition:transform .08s,box-shadow .08s}
+.tab.on{background:var(--yellow)}
+.tab:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
+.scroll{scrollbar-width:thin;scrollbar-color:#000 transparent}
+@media (prefers-reduced-motion:reduce){.marquee::before,.pop{animation:none}}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--mint);outline-offset:2px}
+</style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-3 sm:p-6">
+ 
+<div id="flashOverlay" class="fixed inset-0 z-50 pointer-events-none opacity-0 bg-white"></div>
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] px-5 py-3 sticker bg-[#ffe23d] font-bold opacity-0 pointer-events-none transition-opacity"></div>
+ 
+<header class="w-full max-w-7xl flex flex-col md:flex-row items-center justify-between gap-5 pb-2">
+  <div class="flex items-center gap-4">
+    <div class="sticker w-14 h-14 sm:w-[72px] sm:h-[72px] shrink-0 flex items-center justify-center text-3xl sm:text-4xl -rotate-6 bg-[#ffe23d]">📸</div>
+    <div>
+      <h1 class="orb title text-4xl sm:text-6xl leading-none text-white">MIRROR POSE-OFF</h1>
+      <p class="inline-block mt-3 bg-[#ffe23d] text-black font-bold text-xs sm:text-sm px-3 py-1 border-[3px] border-black -rotate-1">Pose karo, score pao, photo lo • Fest 2026</p>
+    </div>
+  </div>
+  <div class="sticker bg-[#3dffc0] px-4 py-2 flex items-center gap-3 rotate-1 w-full md:w-auto justify-between">
+    <span class="text-3xl">👑</span>
+    <div class="leading-tight"><div class="text-[11px] font-bold">CURRENT CHAMP</div><div id="topName" class="orb text-xl">Abhi koi nahi</div></div>
+    <span id="topScore" class="orb text-4xl">--</span>
+  </div>
+</header>
+ 
+<main class="w-full max-w-7xl my-5 grid lg:grid-cols-[1fr_380px] gap-8">
+ 
+  <section class="flex flex-col gap-5 min-w-0">
+    <div class="marquee">
+      <div class="relative w-full aspect-video rounded-2xl overflow-hidden border-4 border-black bg-[#1b1340]">
+        <video id="webcam" class="hidden" playsinline muted></video>
+        <canvas id="poseCanvas" class="w-full h-full object-cover"></canvas>
+ 
+        <div class="absolute top-3 left-3 sticker px-3 py-1.5 flex items-center gap-2 -rotate-1">
+          <span id="chipEmoji" class="text-2xl sm:text-3xl">🦸</span>
+          <div class="leading-tight">
+            <div class="text-[10px] sm:text-xs font-bold text-[#ff3d81]">TARGET POSE</div>
+            <div id="chipName" class="orb text-sm sm:text-xl">SUPERHERO LANDING</div>
+          </div>
+        </div>
+ 
+        <div class="absolute top-3 right-3 bg-[#1b1340] text-white border-[3px] border-black rounded-2xl shadow-[4px_4px_0_#000] p-2 flex items-center gap-2 rotate-1">
+          <div class="relative w-14 h-14 flex items-center justify-center">
+            <svg class="w-full h-full -rotate-90" viewBox="0 0 64 64">
+              <circle stroke="#3b2f7a" stroke-width="7" fill="none" r="26" cx="32" cy="32"/>
+              <circle id="ring" stroke="#3dffc0" stroke-width="7" stroke-linecap="round" fill="none" r="26" cx="32" cy="32" stroke-dasharray="163.36" stroke-dashoffset="163.36" style="transition:stroke-dashoffset .15s"/>
+            </svg>
+            <span id="pct" class="absolute orb text-base text-[#ffe23d]">0%</span>
+          </div>
+          <div class="hidden sm:block pr-1 max-w-[130px]">
+            <div class="text-[10px] font-bold text-[#ff8ab3]">MATCH</div>
+            <div id="status" class="orb text-xs leading-tight text-cyan-400">GET READY</div>
+          </div>
+        </div>
+ 
+        <div id="tipBar" class="absolute bottom-4 left-1/2 -translate-x-1/2 max-w-[92%] text-center bg-[#ffe23d] text-black border-[3px] border-black rounded-full px-4 py-1 text-sm sm:text-base font-bold shadow-[3px_3px_0_#000]"></div>
+        <div id="holdBar" class="absolute bottom-0 left-0 h-2 bg-[#3dffc0] border-t-2 border-black" style="width:0"></div>
+ 
+        <div class="absolute bottom-14 left-3 flex flex-col items-start gap-2">
+          <select id="camSel" class="hidden sticker !rounded-lg !shadow-[2px_2px_0_#000] text-xs px-2 py-1 max-w-[130px]"></select>
+          <button id="demoBtn" class="sticker !rounded-lg !shadow-[2px_2px_0_#000] text-xs font-bold px-2.5 py-1 hover:bg-[#ffe23d]">🎮 Demo</button>
+        </div>
+ 
+        <div id="cdBox" class="absolute inset-0 flex flex-col items-center justify-center bg-[#1b1340]/60 backdrop-blur-sm pointer-events-none opacity-0 transition-opacity">
+          <div id="cdNum" class="orb cdnum text-[9rem] sm:text-[12rem] leading-none">3</div>
+          <div class="orb text-2xl sm:text-3xl text-white mt-2" style="text-shadow:3px 3px 0 #000">POSE HOLD KARO!</div>
+        </div>
+ 
+        <div id="overlay" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#1b1340] text-center p-6">
+          <div id="spin" class="w-14 h-14 border-[6px] border-[#ffe23d] border-t-[#ff3d81] rounded-full animate-spin mb-4"></div>
+          <p id="ovTitle" class="orb text-xl sm:text-3xl text-[#ffe23d]"></p>
+          <p id="ovDesc" class="text-white/75 mt-2 max-w-md"></p>
+          <div id="ovBtns" class="hidden mt-5 flex gap-3 flex-wrap justify-center">
+            <button id="retryBtn" class="btn px-5 py-2.5 bg-[#ffe23d] text-black orb text-lg">🔄 RETRY</button>
+            <button id="demoBtn2" class="btn px-5 py-2.5 bg-[#ff3d81] text-white orb text-lg">🎮 DEMO MODE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+ 
+    <div class="flex flex-col sm:flex-row gap-4 items-stretch">
+      <button id="capBtn" class="btn flex-1 py-4 bg-[#ffe23d] text-black orb text-2xl sm:text-3xl">📸 CAPTURE POSE <span class="hidden sm:inline text-sm opacity-60 font-sans font-bold">(Space)</span></button>
+      <label class="sticker bg-[#3dffc0] flex items-center justify-center gap-3 px-5 py-3 cursor-pointer select-none">
+        <input id="autoChk" type="checkbox" checked class="w-6 h-6 accent-black">
+        <span class="font-bold leading-tight">AUTO SNAP<br><span class="text-xs font-medium">high match par 1 sec rukne se</span></span>
+      </label>
+    </div>
+  </section>
+ 
+  <aside class="flex flex-col gap-6 min-w-0">
+    <div class="panel p-4 flex flex-col gap-3">
+      <input id="playerName" maxlength="24" placeholder="Naam likho (couple ho to dono) ✍️" class="w-full bg-white border-[3px] border-black rounded-xl px-4 py-2.5 font-bold placeholder:text-slate-400 shadow-[3px_3px_0_#000]">
+      <div class="flex items-center justify-between">
+        <h2 class="orb text-2xl text-[#ff3d81]" style="text-shadow:2px 2px 0 #000">POSE CHUNO</h2>
+        <span id="poseCount" class="sticker !shadow-[2px_2px_0_#000] !rounded-full bg-[#ffe23d] text-xs font-bold px-3 py-0.5"></span>
+      </div>
+      <div class="grid grid-cols-2 gap-3"><button id="tabSolo" class="tab on text-lg">🕺 SOLO</button><button id="tabDuo" class="tab text-lg">👫 COUPLE</button></div>
+      <div id="poseGrid" class="grid grid-cols-2 gap-3 max-h-[400px] overflow-y-auto scroll p-1 pr-2"></div>
+    </div>
+    <div class="panel dark p-4 -rotate-1">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="orb text-2xl text-[#ffe23d]">🏆 LEADERBOARD</h2>
+        <button id="lbClear" class="text-xs text-white/50 hover:text-[#ff8ab3]">reset</button>
+      </div>
+      <ol id="lbList" class="flex flex-col gap-2"></ol>
+    </div>
+  </aside>
+</main>
+ 
+<div id="modal" class="fixed inset-0 z-50 bg-[#1b1340]/85 backdrop-blur-md flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity">
+  <div class="panel max-w-2xl w-full p-5 flex flex-col gap-4 max-h-full overflow-y-auto">
+    <div class="flex justify-between items-center">
+      <h2 class="orb text-3xl text-[#ff3d81]" style="text-shadow:2px 2px 0 #000">🎉 PHOTO READY!</h2>
+      <button id="xBtn" aria-label="Close" class="btn w-11 h-11 bg-white text-xl font-bold !shadow-[3px_3px_0_#000]">✕</button>
+    </div>
+    <canvas id="snapCanvas" class="w-full h-auto rounded-2xl border-4 border-black shadow-[5px_5px_0_#000] bg-[#1b1340]"></canvas>
+    <div class="bg-[#1b1340] text-white p-4 rounded-2xl border-[3px] border-black">
+      <div id="verdict" class="orb text-2xl"></div>
+      <div id="rankTxt" class="text-white/80 mt-1 font-bold"></div>
+    </div>
+    <div class="grid grid-cols-3 gap-3">
+      <button id="saveBtn" class="btn py-3 bg-[#3dffc0] text-black orb text-lg">⬇ SAVE</button>
+      <button id="againBtn" class="btn py-3 bg-[#ffe23d] text-black orb text-lg">🔁 PHIR SE</button>
+      <button id="nextBtn" class="btn py-3 bg-[#ff3d81] text-white orb text-lg">➡ NEXT</button>
+    </div>
+  </div>
+</div>
+ 
+<script>
+const $ = id => document.getElementById(id);
+const AR = 16 / 9;
+const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/';
+ 
+// ---------- POSES ----------
+// Coordinates are screen (mirror) view, 0-1. ls = tumhara left (screen ka left side).
+const KEYS = ['ls','rs','le','re','lw','rw','lh','rh','lk','rk','la','ra','n'];
+const IDX  = [11,12,13,14,15,16,23,24,25,26,27,28,0];
+const BONES = [['ls','rs'],['ls','le'],['le','lw'],['rs','re'],['re','rw'],['ls','lh'],['rs','rh'],['lh','rh'],['lh','lk'],['lk','la'],['rh','rk'],['rk','ra']];
+const BASE = {n:[.5,.17],ls:[.42,.30],rs:[.58,.30],le:[.38,.46],re:[.62,.46],lw:[.37,.62],rw:[.63,.62],lh:[.45,.60],rh:[.55,.60],lk:[.44,.80],rk:[.56,.80],la:[.44,.95],ra:[.56,.95]};
+const P = (name, emoji, tip, o) => ({name, emoji, tip, pts: {...BASE, ...o}});
+const POSES = [
+  P('SUPERHERO LANDING','🦸','Ghutna jhukao, haath zameen par – entry maar ke!',{n:[.5,.27],ls:[.38,.38],rs:[.62,.38],le:[.28,.52],re:[.72,.52],lw:[.22,.68],rw:[.78,.68],lh:[.42,.66],rh:[.58,.66],lk:[.34,.82],rk:[.66,.82],la:[.32,.95],ra:[.68,.95]}),
+  P('LIGHTNING BOLT','⚡','Ek haath aasman me, doosra side me – Bolt style!',{ls:[.42,.30],rs:[.58,.32],le:[.30,.17],re:[.74,.42],lw:[.20,.05],rw:[.86,.50]}),
+  P('CLASSIC DAB','🥶','Munh kohni me chhupao, doosra haath teer jaisa!',{n:[.46,.20],ls:[.42,.33],rs:[.58,.33],le:[.50,.28],lw:[.38,.22],re:[.74,.22],rw:[.90,.10]}),
+  P('MEME T-POSE','🗿','Dono haath seedhe side me. Dominance dikhao!',{n:[.5,.22],ls:[.40,.35],rs:[.60,.35],le:[.26,.35],re:[.74,.35],lw:[.12,.35],rw:[.88,.35]}),
+  P('TOUCHDOWN','🙌','Dono haath upar – goal maar diya bhai!',{le:[.32,.17],re:[.68,.17],lw:[.26,.03],rw:[.74,.03]}),
+  P('KARATE CRANE','🥋','Haath wings jaise, ek ghutna upar. Wax on, wax off!',{le:[.24,.28],re:[.76,.28],lw:[.14,.14],rw:[.86,.14],rk:[.68,.66],ra:[.60,.80],lk:[.45,.80],la:[.45,.96]}),
+  P('BOLLYWOOD ROMANCE','💖','Baahein kholo, thoda sar tedha – SRK wala look!',{n:[.47,.18],le:[.30,.40],lw:[.16,.48],re:[.70,.40],rw:[.84,.48]}),
+  P('DISCO DANCER','🕺','Ek ungli aasman ki taraf, doosra haath neeche!',{n:[.47,.17],le:[.28,.18],lw:[.18,.05],re:[.72,.50],rw:[.84,.68]}),
+  P('CHICKEN DANCE','🐔','Kohni bahar, haath chonch jaise – kok kok kok!',{le:[.27,.36],re:[.73,.36],lw:[.40,.28],rw:[.60,.28]}),
+  P('DOUBLE BICEPS','💪','Gym bro mode ON – muscles dikhao!',{le:[.25,.32],re:[.75,.32],lw:[.28,.14],rw:[.72,.14]}),
+  P('THE THINKER','🤔','Haath thodi pe, doosra pet pe – deep thinking!',{le:[.42,.50],lw:[.57,.50],re:[.64,.44],rw:[.53,.25]}),
+  P('BOSS MODE','😎','Dono haath kamar pe, attitude full!',{le:[.28,.45],re:[.72,.45],lw:[.43,.60],rw:[.57,.60]}),
+  P('NAMASTE BRO','🙏','Haath jodo, bade-bujurgon wali vibes!',{le:[.40,.46],re:[.60,.46],lw:[.49,.38],rw:[.51,.38]})
+];
+ 
+// ---- COUPLE POSES: D(name, emoji, tip, personA_x, personB_x, personA_changes, [personB_changes = mirror of A])
+// changes are [dx from that person's centre, y]. Person A = screen-left, B = screen-right.
+const place = (cx, s) => { const o = {}; KEYS.forEach(k => o[k] = [cx + (BASE[k][0] - .5) * s, .08 + BASE[k][1] * s]); return o; };
+const rel = (cx, f) => { const o = {}; for (const k in f) o[k] = [cx + f[k][0], f[k][1]]; return o; };
+const M = f => { const o = {}; for (const k in f) o[k === 'n' ? 'n' : (k[0] === 'l' ? 'r' : 'l') + k[1]] = [-f[k][0], f[k][1]]; return o; };
+const D = (name, emoji, tip, ca, cb, f, g = M(f)) => ({name, emoji, tip, duo: true, pts: {...place(ca, .88), ...rel(ca, f)}, pts2: {...place(cb, .88), ...rel(cb, g)}});
+POSES.push(
+  D('HALF HEART','💕','Andar wala haath upar, dono milke dil banao!',.36,.64,{re:[.06,.22],rw:[.13,.09]}),
+  D('TITANIC FLY','🚢','Ek haath khula, doosra partner ki kamar par – I am flying!',.34,.66,{le:[-.14,.35],lw:[-.26,.35],re:[.12,.48],rw:[.20,.52]}),
+  D('COOL CROSS','😎','Dono haath cross karke attitude – bodyguard jodi!',.30,.70,{le:[-.07,.46],re:[.07,.46],lw:[.04,.43],rw:[-.04,.43]}),
+  D('BFF SHOULDER HUG','🤗','Ek doosre ke kandhe par haath – yaari full!',.40,.60,{re:[.12,.38],rw:[.22,.34]}),
+  D('SPIDER-MAN POINT','🕷️','Ek doosre ki taraf ungli – wo meme wala pose!',.30,.70,{re:[.14,.35],rw:[.28,.35]}),
+  D('VICTORY DUO','🙌','Chaaron haath upar – trophy hamari hai!',.30,.70,{le:[-.12,.20],lw:[-.16,.04],re:[.12,.20],rw:[.16,.04]}),
+  D('SYNCHRO DAB','🥶','Dono bahar ki taraf dab maaro, ek saath!',.36,.64,{n:[.03,.24],re:[-.03,.30],rw:[.07,.25],le:[-.20,.24],lw:[-.30,.12]}),
+  D('FLEX-OFF','💪','Kaun zyada bada? Dono biceps dikhao!',.30,.70,{le:[-.17,.34],lw:[-.15,.19],re:[.17,.34],rw:[.15,.19]}),
+  D('NAMASTE DUO','🙏','Dono haath jodo – sanskaari jodi!',.32,.68,{le:[-.06,.47],re:[.06,.47],lw:[-.005,.40],rw:[.005,.40]}),
+  D('ROMEO & JULIET','🌹','Romeo haath badhaye, Juliet haath dil par – drama full!',.34,.66,{re:[.14,.38],rw:[.28,.30]},{re:[.05,.46],rw:[-.02,.40]})
+);
+const DUO_V = [
+  [85, ['💍 Shaadi pakki lagti hai!','😍 Perfect jodi!','🔥 Couple goals!']],
+  [65, ['💕 Jodi jamti hai!','😎 Bas thodi aur chemistry!']],
+  [40, ['🙈 Chemistry load ho rahi hai...','😅 Almost jodi!']],
+  [0,  ['😂 Breakup se pehle ki photo?','🤝 Dosti pakki, jodi nahi!']]
+];
+const VERDICTS = [
+  [85, ['🔥 ABSOLUTE LEGEND!','🏆 Oscar yahin se jayega!','👮 Pose police bhi impressed!']],
+  [65, ['⚡ PRO POSE MASTER!','😎 Bas thoda aur, champion!','🚀 Next level aura!']],
+  [40, ['😅 Almost bhai, almost!','🤏 Itna kareeb, itna door…','🐢 Dheere dheere seekh jaoge!']],
+  [0,  ['😜 NICE TRY, MEME LORD!','🤣 Ye kaunsa pose tha bhai?','🪑 Kursi se utho pehle!']]
+];
+ 
+// ---------- STATE ----------
+let tab = 'solo', sel = 0, score = 0, counting = false, modalOpen = false, hold = 0, lastT = performance.now(), lastSeen = 0;
+let pose = null, stream = null, token = 0, busy = false, ready = false, mock = false, AC = null;
+const video = $('webcam'), cv = $('poseCanvas'), ctx = cv.getContext('2d');
+ 
+// ---------- HELPERS ----------
+function beep(f = 600, d = .1) {
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === 'suspended') AC.resume();
+    const o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime;
+    o.frequency.value = f; o.connect(g); g.connect(AC.destination);
+    g.gain.setValueAtTime(.15, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    o.start(t); o.stop(t + d);
+  } catch (e) {}
+}
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.style.opacity = 1;
+  clearTimeout(toast.id); toast.id = setTimeout(() => t.style.opacity = 0, 2600);
+}
+const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function setOverlay(title, desc, err) {
+  $('overlay').classList.remove('hidden');
+  $('ovTitle').textContent = title; $('ovDesc').textContent = desc;
+  $('spin').classList.toggle('hidden', !!err); $('ovBtns').classList.toggle('hidden', !err);
+}
+const hideOverlay = () => $('overlay').classList.add('hidden');
+ 
+function fig(c, pts, w, h, o) {
+  c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = o.col; c.lineWidth = o.lw; c.setLineDash(o.dash || []);
+  BONES.forEach(([a, b]) => {
+    if (pts[a] && pts[b]) { c.beginPath(); c.moveTo(pts[a][0] * w, pts[a][1] * h); c.lineTo(pts[b][0] * w, pts[b][1] * h); c.stroke(); }
+  });
+  c.setLineDash([]);
+  if (pts.n) { c.beginPath(); c.arc(pts.n[0] * w, pts.n[1] * h, o.r, 0, 7); c.stroke(); }
+  if (o.dot) {
+    c.fillStyle = o.dot;
+    KEYS.forEach(k => { if (pts[k] && k !== 'n') { c.beginPath(); c.arc(pts[k][0] * w, pts[k][1] * h, o.lw * 1.3, 0, 7); c.fill(); } });
+  }
+}
+ 
+// ---------- LEADERBOARD ----------
+const LB_KEY = 'poseoff_lb_v2';
+let LB = [];
+try { LB = JSON.parse(localStorage.getItem(LB_KEY)) || []; } catch (e) {}
+function lbAdd(e) {
+  LB.push(e); LB.sort((a, b) => b.s - a.s);
+  const rank = LB.findIndex(x => x.t === e.t) + 1;
+  LB = LB.slice(0, 30);
+  try { localStorage.setItem(LB_KEY, JSON.stringify(LB)); } catch (x) {}
+  renderLB(); return rank;
+}
+function renderLB() {
+  const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+  $('lbList').innerHTML = LB.length ? LB.slice(0, 5).map((e, i) =>
+    `<li class="flex items-center justify-between bg-slate-950/60 rounded-lg px-3 py-1.5"><span>${medals[i]} <b>${esc(e.n)}</b> <span class="text-xs text-slate-500">${e.e}</span></span><span class="orb font-bold text-yellow-400">${e.s}%</span></li>`).join('')
+    : '<li class="text-slate-500 text-sm">Abhi koi score nahi. Pehle tum ban jao! 🚀</li>';
+  $('topName').textContent = LB[0] ? LB[0].n.toUpperCase() : 'Abhi koi nahi';
+  $('topScore').textContent = LB[0] ? LB[0].s + '%' : '--';
+}
+ 
+// ---------- POSE UI ----------
+function renderGrid() {
+  const g = $('poseGrid'); g.innerHTML = '';
+  POSES.forEach((p, i) => {
+    if (!!p.duo !== (tab === 'duo')) return;
+    const b = document.createElement('button');
+    b.className = 'card' + (i === sel ? ' on' : '');
+    const c = document.createElement('canvas'); c.width = 160; c.height = 90;
+    c.className = 'w-full aspect-video rounded-lg bg-slate-950';
+    const cc = c.getContext('2d'), o = {col: i === sel ? '#ffe23d' : '#a89bff', lw: 3, r: p.duo ? 5 : 6}; fig(cc, p.pts, 160, 90, o); if (p.pts2) fig(cc, p.pts2, 160, 90, o);
+    const t = document.createElement('div');
+    t.className = 'orb font-bold text-[11px] mt-1.5 truncate'; t.textContent = p.emoji + ' ' + p.name;
+    b.append(c, t); b.onclick = () => selectPose(i); g.appendChild(b);
+  });
+  $('poseCount').textContent = POSES.filter(p => !!p.duo === (tab === 'duo')).length + ' poses';
+  $('tabSolo').classList.toggle('on', tab === 'solo'); $('tabDuo').classList.toggle('on', tab === 'duo');
+  $('chipEmoji').textContent = POSES[sel].emoji; $('chipName').textContent = POSES[sel].name;
+  $('tipBar').textContent = '👉 ' + POSES[sel].tip;
+}
+function setTab(t) { selectPose(POSES.findIndex(p => !!p.duo === (t === 'duo'))); }
+function step(d) { const ids = POSES.map((p, i) => i).filter(i => !!POSES[i].duo === (tab === 'duo')); selectPose(ids[(ids.indexOf(sel) + d + ids.length) % ids.length]); }
+function selectPose(i) { sel = (i + POSES.length) % POSES.length; tab = POSES[sel].duo ? 'duo' : 'solo'; hold = 0; renderGrid(); beep(800, .08); }
+ 
+// ---------- SCORING ----------
+const W = {le:2, re:2, lw:2, rw:2};
+function fromLm(lm) {
+  const u = {};
+  KEYS.forEach((k, i) => { const p = lm[IDX[i]]; if (p && (p.visibility ?? 1) > .5) u[k] = [1 - p.x, p.y]; });
+  return u;
+}
+function calc(u, t) {
+  if (!u.ls || !u.rs) return null;
+  // Body shoulder-center pe anchor + shoulder-width se scale => kahin bhi khade ho, score sahi aayega
+  const nm = p => {
+    const mx = (p.ls[0] + p.rs[0]) / 2 * AR, my = (p.ls[1] + p.rs[1]) / 2;
+    const sw = Math.max(Math.hypot((p.rs[0] - p.ls[0]) * AR, p.rs[1] - p.ls[1]), .12);
+    return k => [(p[k][0] * AR - mx) / sw, (p[k][1] - my) / sw];
+  };
+  const fu = nm(u), ft = nm(t); let d = 0, n = 0;
+  KEYS.forEach(k => {
+    if (u[k]) { const a = fu(k), b = ft(k), w = W[k] || 1; d += w * Math.hypot(a[0] - b[0], a[1] - b[1]); n += w; }
+  });
+  return Math.max(0, Math.min(100, Math.round(100 * (1 - Math.max(0, d / n - .12) / .55))));
+}
+function updateHUD(seen, one) {
+  const s = Math.round(score);
+  $('pct').textContent = s + '%';
+  $('ring').style.strokeDashoffset = 163.36 * (1 - s / 100);
+  const st = $('status');
+  if (!seen) { st.textContent = one ? 'PARTNER KAHAN HAI? 👫' : 'FRAME ME AAO 👀'; st.className = 'orb font-bold text-xs text-slate-400'; }
+  else if (s >= 80) { st.textContent = 'PERFECT! 🔥'; st.className = 'orb font-bold text-xs text-green-400 animate-pulse'; }
+  else if (s >= 55) { st.textContent = 'KAREEB HO...'; st.className = 'orb font-bold text-xs text-yellow-400'; }
+  else { st.textContent = 'PEELE SKELETON ME FIT HO'; st.className = 'orb font-bold text-xs text-cyan-400'; }
+}
+ 
+// ---------- DRAW LOOP ----------
+function overlay(users) {
+  const w = cv.width, h = cv.height, cur = POSES[sel], tpls = cur.duo ? [cur.pts, cur.pts2] : [cur.pts], now = performance.now(), dt = now - lastT; lastT = now;
+  ctx.shadowColor = '#facc15'; ctx.shadowBlur = 16;
+  tpls.forEach(t => fig(ctx, t, w, h, {col: 'rgba(250,204,21,.8)', lw: h / 70, dash: [h / 60, h / 70], r: h * .06 * (cur.duo ? .88 : 1)}));
+  ctx.shadowBlur = 0;
+  const sw = u => Math.abs(u.rs[0] - u.ls[0]);
+  const list = users.filter(u => u.ls && u.rs).sort((a, b) => sw(b) - sw(a)).slice(0, tpls.length).sort((a, b) => (a.ls[0] + a.rs[0]) - (b.ls[0] + b.rs[0]));
+  list.forEach(u => fig(ctx, u, w, h, {col: '#3dffc0', lw: h / 110, r: h * .05, dot: '#ff3d81'}));
+  let s = null;
+  if (list.length === tpls.length) { const sc = list.map((u, i) => calc(u, tpls[i])); if (sc.every(x => x !== null)) s = sc.reduce((a, b) => a + b) / sc.length; }
+  if (s === null) score *= .9; else { score = score * .6 + s * .4; lastSeen = now; }
+  const seen = now - lastSeen < 1000;
+  updateHUD(seen, cur.duo && list.length === 1);
+  if ($('autoChk').checked && !counting && !modalOpen && seen && score >= (cur.duo ? 72 : 80)) hold += dt; else hold = Math.max(0, hold - dt * 2);
+  $('holdBar').style.width = Math.min(100, hold / 12) + '%';
+  if (hold >= 1200) { hold = 0; startCountdown(); }
+}
+function onFrame(lms) {
+  if (mock) return;
+  if (!ready) { ready = true; hideOverlay(); }
+  const w = video.videoWidth, h = video.videoHeight;
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  ctx.save(); ctx.translate(w, 0); ctx.scale(-1, 1); ctx.drawImage(video, 0, 0, w, h); ctx.restore();
+  overlay(lms.map(fromLm));
+}
+function mockLoop(t) {
+  if (!mock) return;
+  const w = cv.width, h = cv.height, cur = POSES[sel];
+  const amp = .01 + .09 * (Math.sin(t / 2500) + 1) / 2;
+  const us = (cur.duo ? [cur.pts, cur.pts2] : [cur.pts]).map(tpl => { const u = {}; KEYS.forEach((k, i) => { u[k] = [tpl[k][0] + Math.sin(t / 300 + i) * amp, tpl[k][1] + Math.cos(t / 370 + i * 2) * amp]; }); return u; });
+  const g = ctx.createLinearGradient(0, 0, w, h); g.addColorStop(0, '#0f172a'); g.addColorStop(1, '#3b0a3f');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = 'rgba(6,182,212,.15)'; ctx.lineWidth = 2;
+  for (let x = 0; x < w; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+  for (let y = 0; y < h; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+  ctx.font = 'bold 26px Lilita One,sans-serif'; ctx.fillStyle = '#ec4899';
+  ctx.fillText('🎮 DEMO MODE (bina webcam)', 40, h - 70);
+  overlay(us);
+  requestAnimationFrame(mockLoop);
+}
+ 
+// ---------- CAMERA ----------
+const TV = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+const MODEL = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
+let lmk = null, lastVT = -1;
+async function initPose() {
+  if (lmk) return;
+  const {PoseLandmarker, FilesetResolver} = await import(TV + '/vision_bundle.mjs');
+  const fs = await FilesetResolver.forVisionTasks(TV + '/wasm');
+  const mk = d => PoseLandmarker.createFromOptions(fs, {baseOptions: {modelAssetPath: MODEL, delegate: d}, runningMode: 'VIDEO', numPoses: 2, minPoseDetectionConfidence: .5, minTrackingConfidence: .5});
+  try { lmk = await mk('GPU'); } catch (e) { lmk = await mk('CPU'); }
+}
+function stopStream() { token++; if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; }
+async function loop(id) {
+  while (id === token && stream) {
+    if (lmk && video.readyState >= 2 && video.currentTime !== lastVT) {
+      lastVT = video.currentTime;
+      try { onFrame(lmk.detectForVideo(video, performance.now()).landmarks); } catch (e) { console.warn(e); }
+    }
+    await new Promise(r => requestAnimationFrame(r));
+  }
+}
+async function listCams() {
+  try {
+    const cams = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'videoinput');
+    const s = $('camSel'); s.innerHTML = '';
+    cams.forEach((d, i) => s.add(new Option(d.label || 'Camera ' + (i + 1), d.deviceId)));
+    const cur = stream && stream.getVideoTracks()[0].getSettings().deviceId; if (cur) s.value = cur;
+    s.classList.toggle('hidden', cams.length < 2);
+  } catch (e) {}
+}
+async function startCamera(deviceId) {
+  mock = false; stopStream(); ready = false; $('demoBtn').textContent = '🎮 Demo';
+  setOverlay('📷 CAMERA CHALU HO RAHA HAI...', 'Browser permission maange toh "Allow" dabao.', false);
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
+    return setOverlay('CAMERA SUPPORT NAHI', 'Page ko https:// ya localhost par kholo (Live Server use karo).', true);
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({video: deviceId ? {deviceId: {exact: deviceId}} : {facingMode: 'user', width: {ideal: 1280}, height: {ideal: 720}}, audio: false});
+    video.srcObject = stream; await video.play(); listCams();
+    setOverlay('🧠 AI MODEL LOAD HO RAHA HAI...', 'Pehli baar thoda time lagta hai (internet chahiye).', false);
+    try { await Promise.race([initPose(), new Promise((_, rj) => setTimeout(() => rj(new Error('MP')), 40000))]); } catch (x) { console.warn(x); throw new Error('MP'); }
+    loop(token);
+  } catch (e) {
+    stopStream();
+    setOverlay(e.message === 'MP' ? 'AI LIBRARY LOAD NAHI HUI' : 'CAMERA NAHI MILA',
+      e.message === 'MP' ? 'Internet check karo aur page reload karo.' :
+      e.name === 'NotAllowedError' ? 'Permission block hai – address bar ke camera icon se Allow karo.' : 'Webcam check karo ya Demo Mode try karo.', true);
+  }
+}
+function startDemo() {
+  stopStream(); mock = true; ready = true; hideOverlay();
+  cv.width = 1280; cv.height = 720; $('demoBtn').textContent = '📷 Camera';
+  requestAnimationFrame(mockLoop);
+}
+ 
+// ---------- CAPTURE ----------
+function startCountdown() {
+  if (counting || modalOpen) return;
+  if (!mock && performance.now() - lastSeen > 1200) return toast(POSES[sel].duo ? 'Dono log frame me aao! 👫' : 'Koi dikha nahi! 👀 Camera ke saamne aao');
+  counting = true;
+  const box = $('cdBox'), num = $('cdNum'); box.style.opacity = 1;
+  let c = 3;
+  const show = () => { num.textContent = c; num.classList.remove('pop'); void num.offsetWidth; num.classList.add('pop'); beep(700, .15); };
+  show();
+  const iv = setInterval(() => {
+    c--;
+    if (c > 0) show(); else { clearInterval(iv); box.style.opacity = 0; snap(); }
+  }, 1000);
+}
+function snap() {
+  const f = $('flashOverlay'); f.classList.remove('flash'); void f.offsetWidth; f.classList.add('flash');
+  beep(1200, .3);
+  const fs = Math.round(score);
+  drawSnapshot(fs);
+  if (fs >= 70) confetti({colors: ['#ff3d81','#ffe23d','#3dffc0','#ffffff'], particleCount: 140, spread: 80, origin: {y: .6}});
+  setTimeout(() => showModal(fs), 450);
+}
+function drawSnapshot(fs) {
+  const sc = $('snapCanvas'), c = sc.getContext('2d'), w = sc.width = cv.width || 1280, h = sc.height = cv.height || 720, p = POSES[sel];
+  if (!mock && video.videoWidth) { c.save(); c.translate(w, 0); c.scale(-1, 1); c.drawImage(video, 0, 0, w, h); c.restore(); }
+  else c.drawImage(cv, 0, 0, w, h);
+  const g = c.createLinearGradient(0, h * .76, 0, h); g.addColorStop(0, 'rgba(2,6,23,0)'); g.addColorStop(1, 'rgba(2,6,23,.92)');
+  c.fillStyle = g; c.fillRect(0, h * .76, w, h * .24);
+  c.fillStyle = '#fff'; c.font = `900 ${h * .055}px Lilita One,sans-serif`; c.fillText(p.emoji + ' ' + p.name, w * .03, h * .92);
+  c.fillStyle = '#3dffc0'; c.font = `700 ${h * .04}px Space Grotesk,sans-serif`;
+  c.fillText((($('playerName').value.trim()) || 'Player') + '  |  COLLEGE FEST 2026', w * .03, h * .97);
+  c.fillStyle = '#ff3d81'; c.beginPath(); c.roundRect(w * .79, h * .05, w * .18, h * .13, 18); c.fill();
+  c.fillStyle = '#fff'; c.textAlign = 'center'; c.font = `900 ${h * .075}px Lilita One,sans-serif`; c.fillText(fs + '%', w * .88, h * .145); c.textAlign = 'left';
+  c.lineWidth = 14; c.strokeStyle = '#ffe23d'; c.strokeRect(7, 7, w - 14, h - 14);
+}
+function showModal(fs) {
+  const tier = (POSES[sel].duo ? DUO_V : VERDICTS).find(v => fs >= v[0])[1], v = $('verdict');
+  v.textContent = tier[Math.floor(Math.random() * tier.length)];
+  v.className = 'orb font-black text-xl ' + (fs >= 85 ? 'text-green-400' : fs >= 65 ? 'text-yellow-400' : 'text-pink-500');
+  const rank = lbAdd({n: $('playerName').value.trim() || 'Player', s: fs, e: POSES[sel].emoji, t: Date.now()});
+  $('rankTxt').textContent = rank <= 5 ? `Leaderboard me #${rank}! 🎉` : `Leaderboard me #${rank}. Phir try karo!`;
+  $('modal').classList.remove('opacity-0', 'pointer-events-none'); modalOpen = true; counting = false;
+}
+function closeModal() { $('modal').classList.add('opacity-0', 'pointer-events-none'); modalOpen = false; hold = 0; }
+function download() {
+  $('snapCanvas').toBlob(b => {
+    const a = document.createElement('a'), n = ($('playerName').value.trim() || 'Player').replace(/\W+/g, '_');
+    a.href = URL.createObjectURL(b); a.download = `Fest2026_${n}_${Date.now()}.png`; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }, 'image/png');
+}
+ 
+// ---------- EVENTS ----------
+window.addEventListener('DOMContentLoaded', () => {
+  renderGrid(); renderLB(); startCamera();
+  $('capBtn').onclick = startCountdown;
+  $('tabSolo').onclick = () => setTab('solo'); $('tabDuo').onclick = () => setTab('duo');
+  $('retryBtn').onclick = () => startCamera();
+  $('demoBtn').onclick = () => mock ? startCamera() : startDemo();
+  $('demoBtn2').onclick = startDemo;
+  $('camSel').onchange = e => startCamera(e.target.value);
+  $('xBtn').onclick = closeModal; $('nextBtn').onclick = () => { closeModal(); $('playerName').value = ''; $('playerName').focus(); };
+  $('againBtn').onclick = closeModal; $('saveBtn').onclick = download;
+  $('lbClear').onclick = () => { if (confirm('Poora leaderboard reset kar du?')) { LB = []; try { localStorage.removeItem(LB_KEY); } catch (e) {} renderLB(); } };
+});
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') return closeModal();
+  if (e.target.tagName === 'INPUT' || modalOpen) return;
+  if (e.code === 'Space' || e.key === 'Enter') { e.preventDefault(); startCountdown(); }
+  else if (e.key === 'ArrowRight') step(1);
+  else if (e.key === 'ArrowLeft') step(-1);
+});
+</script>
+</body>
+</html>
